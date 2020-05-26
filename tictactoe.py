@@ -307,11 +307,27 @@ class TicTacToe(object):
 		print "Best move is {0}. Found in: {1}s".format(index, time.time()-st)
 		return index
 
-	def __minimax(self, board, player, alpha, beta):
+	def __minimax(self, board, player, alpha, beta, depth=0):
 		""" AI uses minimax algorithm with alpha-beta pruning to work out the
 		best possible move.
 
 		Its a recursive method.
+
+		# Experiment:
+		Based on the depth, the winning or the losing score should be reduced.
+		Sample case:
+			Game play: (0,4,1,2,7)
+			Board: |O,O,X|
+				   | ,X, |
+				   | ,O, |
+
+			Although playing the slot 6 gives the AI an immediate victory,
+			since it picks the first best outcome, it ignores that option and
+			instead goes for the slot 3. This extends the game to one additional
+			move.
+
+			Updating the AI to take the depth into account should fix this
+			issue.
 		"""
 		# Get all the available slots in the board.
 		avail_slots = self.__get_available_slots(board)
@@ -325,9 +341,13 @@ class TicTacToe(object):
 		# send a negative score to let the maximizing player to know he has
 		# last the game.
 		if game_result == TicTacToe.WON:
+
+			depth_factor = 1.0/depth if depth != 0 else 1.0
+
 			score = TicTacToe.LOST_SCORE if player == self.__maximizing_player \
 				else TicTacToe.WIN_SCORE
-			return {"score" : score}
+			return {"score" : score*depth_factor}
+
 		elif game_result == TicTacToe.TIE:
 			return {"score" : TicTacToe.TIE_SCORE}
 
@@ -341,7 +361,7 @@ class TicTacToe(object):
 
 			if player == self.__maximizing_player:
 				result = self.__minimax(board, self.__minimizing_player,
-					alpha, beta)
+					alpha, beta, depth=depth+1)
 
 				if result["score"] > best_score:
 					best_score = result["score"]
@@ -355,7 +375,7 @@ class TicTacToe(object):
 					break
 			else:
 				result = self.__minimax(board, self.__maximizing_player,
-					alpha, beta)
+					alpha, beta, depth=depth+1)
 
 				if result["score"] < best_score:
 					best_score = result["score"]
